@@ -1,0 +1,131 @@
+import com.leapmotion.leap.*;
+import java.util.ArrayList;
+
+// Leap Motion 控制器物件
+Controller leapController;
+
+// 遊戲元素
+PVector paddle;
+float paddleWidth = 100;
+float paddleHeight = 20;
+PVector ball;
+PVector ballSpeed;
+
+// 磚塊
+ArrayList<Brick> bricks;
+
+// 遊戲狀態
+boolean gameActive = false;
+
+void setup() {
+  size(800, 600);
+  
+  // 初始化Leap Motion控制器
+  leapController = new Controller();
+  
+  // 初始化遊戲元素
+  paddle = new PVector(width / 2 - paddleWidth / 2, height - 50);
+  ball = new PVector(width / 2, height / 2);
+  ballSpeed = new PVector(5, -5);
+  
+  // 初始化磚塊
+  bricks = new ArrayList<Brick>();
+  int rows = 5;
+  int cols = 10;
+  for (int i = 0; i < rows; i++) {
+    for (int j = 0; j < cols; j++) {
+      bricks.add(new Brick(j * 80 + 20, i * 30 + 50, 60, 20));
+    }
+  }
+}
+
+void draw() {
+  background(255);
+  ***if (ball.y > height) {
+      gameActive = true;
+    }
+  if (gameActive) {
+    // 更新Leap Motion控制器
+    Frame frame = leapController.frame();
+    for (Hand hand : frame.hands()) {
+      // 根據手的位置更新板子的位置
+      PVector handPos = leapToScreen(hand.palmPosition());
+      paddle.x = handPos.x - paddleWidth / 2;
+    }
+    
+    // 移動板子，確保不超出螢幕邊界
+    paddle.x = constrain(paddle.x, 0, width - paddleWidth);
+    
+    // 繪製板子
+    fill(0, 0, 255);
+    rect(paddle.x, paddle.y, paddleWidth, paddleHeight);
+    
+    // 更新球的位置
+    ball.add(ballSpeed);
+    
+    // 如果球觸碰到螢幕邊界，改變方向
+    if (ball.x < 0 || ball.x > width) {
+      ballSpeed.x *= -1;
+    }
+    if (ball.y < 0) {
+      ballSpeed.y *= -1;
+    }
+    // 如果球觸碰到板子，改變方向
+    if (ball.x > paddle.x && ball.x < paddle.x + paddleWidth && ball.y + 10 > paddle.y) {
+      ballSpeed.y *= -1;
+    }
+    
+    // 檢查球是否與磚塊相撞
+    for (Brick brick : bricks) {
+      if (brick.visible && ball.x > brick.x && ball.x < brick.x + brick.width
+          && ball.y > brick.y && ball.y < brick.y + brick.height) {
+        brick.visible = false;
+        ballSpeed.y *= -1;
+      }
+    }
+    
+    // 檢查球是否超過畫面底部，結束遊戲
+    if (ball.y > height) {
+      gameActive = false;
+    }
+    
+    // 繪製球
+    fill(255, 0, 0);
+    ellipse(ball.x, ball.y, 20, 20);
+    
+    // 繪製磚塊
+    for (Brick brick : bricks) {
+      if (brick.visible) {
+        fill(0, 255, 0);
+        rect(brick.x, brick.y, brick.width, brick.height);
+      }
+    }
+  } else {
+    // 遊戲結束的畫面，你可以根據需要自行設計
+    fill(0);
+    textSize(32);
+    textAlign(CENTER, CENTER);
+    text("Game Over", width / 2, height / 2);
+  }
+}
+
+// 將Leap Motion座標轉換為螢幕座標
+PVector leapToScreen(Vector leapVector) {
+  PVector screenPosition = new PVector();
+  screenPosition.x = map(leapVector.getX(), -200, 200, 0, width);
+  screenPosition.y = map(leapVector.getY(), 100, 500, height, 0);
+  return screenPosition;
+}
+
+// 磚塊類別
+class Brick {
+  float x, y, width, height;
+  boolean visible = true;
+  
+  Brick(float x, float y, float w, float h) {
+    this.x = x;
+    this.y = y;
+    this.width = w;
+    this.height = h;
+  }
+}
