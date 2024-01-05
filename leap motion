@@ -10,12 +10,17 @@ float paddleWidth = 100;
 float paddleHeight = 20;
 PVector ball;
 PVector ballSpeed;
+PImage img;
 
 // 磚塊
 ArrayList<Brick> bricks;
 
 // 遊戲狀態
-boolean gameActive = false;
+boolean gameActive = true;
+int countdown = 3;
+int lastTime;
+boolean countdownStarted = true;
+int point = 0;
 
 void setup() {
   size(800, 600);
@@ -25,8 +30,8 @@ void setup() {
   
   // 初始化遊戲元素
   paddle = new PVector(width / 2 - paddleWidth / 2, height - 50);
-  ball = new PVector(width / 2, height / 2);
-  ballSpeed = new PVector(5, -5);
+  ball = new PVector(int(random(10, width - 10)), height / 2);
+  ballSpeed = new PVector();
   
   // 初始化磚塊
   bricks = new ArrayList<Brick>();
@@ -41,11 +46,26 @@ void setup() {
 
 void draw() {
   background(255);
-  ***if (ball.y > height) {
-      gameActive = true;
-    }
+  img = loadImage("bg.jpg");
+  image(img, 0, 0, 800, 600);
   if (gameActive) {
-    // 更新Leap Motion控制器
+    if (countdownStarted) {
+      int currentTime = millis();
+      if (currentTime - lastTime >= 1000) {
+        countdown--;
+        lastTime = currentTime;
+      }
+      if (countdown > 0) {
+        fill(255, 0, 0);
+        textSize(64);
+        textAlign(CENTER, CENTER);
+        text(countdown, width / 2, height / 2);
+      }
+      else {
+        countdownStarted = false;
+        ballSpeed = new PVector(-5, 5);
+      }
+    }
     Frame frame = leapController.frame();
     for (Hand hand : frame.hands()) {
       // 根據手的位置更新板子的位置
@@ -57,55 +77,67 @@ void draw() {
     paddle.x = constrain(paddle.x, 0, width - paddleWidth);
     
     // 繪製板子
-    fill(0, 0, 255);
+    fill(int(random(255)), int(random(255)), int(random(255)));
     rect(paddle.x, paddle.y, paddleWidth, paddleHeight);
     
     // 更新球的位置
     ball.add(ballSpeed);
     
     // 如果球觸碰到螢幕邊界，改變方向
-    if (ball.x < 0 || ball.x > width) {
+    if (ball.x < 10 || ball.x + 10 > width) {
       ballSpeed.x *= -1;
     }
-    if (ball.y < 0) {
+    if (ball.y < 10) {
       ballSpeed.y *= -1;
     }
     // 如果球觸碰到板子，改變方向
-    if (ball.x > paddle.x && ball.x < paddle.x + paddleWidth && ball.y + 10 > paddle.y) {
+    if (ball.x >= paddle.x && ball.x <= paddle.x + paddleWidth && ball.y + 10 == paddle.y) {
       ballSpeed.y *= -1;
     }
     
     // 檢查球是否與磚塊相撞
     for (Brick brick : bricks) {
-      if (brick.visible && ball.x > brick.x && ball.x < brick.x + brick.width
-          && ball.y > brick.y && ball.y < brick.y + brick.height) {
+      if (brick.visible && ball.x >= brick.x && ball.x <= brick.x + brick.width
+          && ball.y >= brick.y + 5 && ball.y <= brick.y + brick.height + 10) {
         brick.visible = false;
+        point += 1;
         ballSpeed.y *= -1;
       }
     }
     
     // 檢查球是否超過畫面底部，結束遊戲
-    if (ball.y > height) {
+    if (ball.y + 10 > height) {
       gameActive = false;
     }
     
     // 繪製球
-    fill(255, 0, 0);
+    fill(int(random(255)), int(random(255)), int(random(255)));
     ellipse(ball.x, ball.y, 20, 20);
     
     // 繪製磚塊
     for (Brick brick : bricks) {
       if (brick.visible) {
-        fill(0, 255, 0);
+        fill(175, 80, 80);
         rect(brick.x, brick.y, brick.width, brick.height);
       }
     }
-  } else {
-    // 遊戲結束的畫面，你可以根據需要自行設計
-    fill(0);
-    textSize(32);
-    textAlign(CENTER, CENTER);
-    text("Game Over", width / 2, height / 2);
+  }
+  else {
+    // 遊戲結束的畫面
+    if (point == 1) {
+      img = loadImage("win.jpg");
+      image(img, 0, 0, 800, 600);
+    }
+    else{
+      img = loadImage("lose.png");
+      image(img, 0, 0, 800, 600);
+      fill(0);
+      textSize(32);
+      textAlign(CENTER, CENTER);
+      text("Game Over", width / 2, height / 2);
+      fill(255, 0, 0);
+      text("score : " + point, width / 2, height / 2 + 30);
+    }
   }
 }
 
@@ -128,4 +160,9 @@ class Brick {
     this.width = w;
     this.height = h;
   }
+}
+
+void startCountdown() {
+  countdownStarted = true;
+  lastTime = millis();
 }
