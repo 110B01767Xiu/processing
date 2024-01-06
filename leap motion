@@ -51,7 +51,7 @@ void setup() {
 }
 
 void draw() {
-  if (point == 10) {
+  if (point == 50) {
     gameActive = false;
   }
   background(255);
@@ -137,7 +137,7 @@ void draw() {
   }
   else {
     // 遊戲結束的畫面
-    if (point == 10) {
+    if (point == 50) {
       img = loadImage("win.jpg");
       image(img, 0, 0, 800, 600);
     }
