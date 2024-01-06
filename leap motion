@@ -1,8 +1,10 @@
 import com.leapmotion.leap.*;
 import java.util.ArrayList;
+import ddf.minim.*;
+Minim minim;//新增minim變數
 
 // Leap Motion 控制器物件
-Controller leapController;
+com.leapmotion.leap.Controller leapController;
 
 // 遊戲元素
 PVector paddle;
@@ -24,9 +26,13 @@ int point = 0;
 
 void setup() {
   size(800, 600);
+  AudioPlayer player;//新增音樂變數
+  minim = new Minim(this);
+  player = minim.loadFile("bgmusic.mp3");
+  player.play();
   
   // 初始化Leap Motion控制器
-  leapController = new Controller();
+  leapController = new com.leapmotion.leap.Controller();
   
   // 初始化遊戲元素
   paddle = new PVector(width / 2 - paddleWidth / 2, height - 50);
@@ -45,6 +51,9 @@ void setup() {
 }
 
 void draw() {
+  if (point == 10) {
+    gameActive = false;
+  }
   background(255);
   img = loadImage("bg.jpg");
   image(img, 0, 0, 800, 600);
@@ -102,6 +111,10 @@ void draw() {
         brick.visible = false;
         point += 1;
         ballSpeed.y *= -1;
+        AudioPlayer player1;//新增音樂變數
+        minim = new Minim(this);
+        player1 = minim.loadFile("music.mp3");
+        player1.play();
       }
     }
     
@@ -124,7 +137,7 @@ void draw() {
   }
   else {
     // 遊戲結束的畫面
-    if (point == 1) {
+    if (point == 10) {
       img = loadImage("win.jpg");
       image(img, 0, 0, 800, 600);
     }
